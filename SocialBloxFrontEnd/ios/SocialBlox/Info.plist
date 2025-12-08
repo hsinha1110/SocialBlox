@@ -26,8 +26,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-
-	<!-- 🔒 Networking Permissions -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -35,44 +33,38 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-
-	<!-- 📍 Location Permission (Empty But Present) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
-
-	<!-- 📸 Camera & Gallery Permissions -->
+	<string/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires access to your camera to take photos.</string>
-
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app requires access to your photo library to select images.</string>
-
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app requires permission to save photos to your library.</string>
-
 	<key>RCTNewArchEnabled</key>
 	<true/>
-
-	<!-- 🚀 Launch Screen -->
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-
-	<!-- 📱 Device Requirements -->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
 	</array>
-
-	<!-- ↕️ Supported Orientations -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-
-	<!-- Status Bar Control -->
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Poppins-Black.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-Light.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+	</array>
 </dict>
 </plist>

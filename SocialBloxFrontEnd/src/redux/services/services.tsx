@@ -2,7 +2,8 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { METHODS, replaceUrl, SERVICE_ROUTES } from '../constants';
 
 import {
-  GetPostPayload,
+  AddPostRequest,
+  AddPostResponse,
   GetPostResponse,
   GetProfileParams,
   GetProfileResponse,
@@ -94,9 +95,91 @@ export const getUserProfileByIdServices = async ({
 
     console.log(response.data.data, '✔ profile service response');
 
-    return response.data; // ← return ONLY the typed data
+    return response.data;
   } catch (error: any) {
     console.error('Profile Service Error:', error?.response?.data);
     throw error;
   }
+};
+
+export const addPostService = async (
+  payload: AddPostRequest,
+): Promise<AddPostResponse> => {
+  const { userId, caption, username, imageUri } = payload;
+
+  const formData = new FormData();
+
+  formData.append('userId', userId);
+  formData.append('caption', caption);
+  formData.append('username', username);
+
+  if (imageUri) {
+    const fileName = imageUri.split('/').pop() || 'photo.jpg';
+    const ext = fileName.split('.').pop() || 'jpg';
+    const mimeType = `image/${ext}`;
+
+    formData.append('imageUrl', {
+      uri: imageUri,
+      name: fileName,
+      type: mimeType,
+    } as any);
+  }
+
+  const { data } = await axios.post<AddPostResponse>(
+    SERVICE_ROUTES.ADD_POST,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+
+  return data;
+};
+
+// Delete Post By Id Service
+export const deletePostByIdService = async (postId: string) => {
+  const url = replaceUrl(SERVICE_ROUTES.DELETE_POST_BY_ID, { id: postId });
+
+  const response = await axios({
+    url,
+    method: METHODS.DELETE,
+  });
+
+  return response.data;
+};
+
+// Update Post Service
+export const postUpdateServiceById = async (
+  payload: AddPostRequest & { postId: string },
+): Promise<AddPostResponse> => {
+  const { postId, userId, caption, username, imageUri } = payload;
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  formData.append('caption', caption);
+  formData.append('username', username);
+
+  if (imageUri) {
+    const fileName = imageUri.split('/').pop() || 'photo.jpg';
+    const ext = fileName.split('.').pop() || 'jpg';
+    const mimeType = `image/${ext}`;
+    formData.append('imageUrl', {
+      uri: imageUri,
+      name: fileName,
+      type: mimeType,
+    } as any); // backend expects "imageUrl"
+  }
+
+  // Replace :id in URL
+  const url = replaceUrl(SERVICE_ROUTES.UPDATE_POST_BY_ID, { id: postId });
+
+  const { data } = await axios.put<AddPostResponse>(url, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return data;
 };

@@ -57,9 +57,9 @@ const LoginScreen: FC<Props> = () => {
       if (LoginThunk.fulfilled.match(result)) {
         const accessToken = result.payload.data.accessToken;
         const userId = result.payload.data.user._id;
-
-        console.log('accessToken:', accessToken);
+        const userName = result.payload.data.username;
         console.log('userId:', userId);
+        console.log('userName:', userName);
 
         if (accessToken) {
           await AsyncStorage.setItem('userToken', accessToken);
@@ -68,7 +68,9 @@ const LoginScreen: FC<Props> = () => {
         if (userId) {
           await AsyncStorage.setItem('userId', userId);
         }
-
+        if (userName) {
+          await AsyncStorage.setItem('userName', userName);
+        }
         Alert.alert('Success', 'Logged in successfully');
       } else {
         Alert.alert('Error', result.payload || 'Login failed');

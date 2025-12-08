@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Pressable,
@@ -13,10 +13,17 @@ import { IMAGES } from '../../../constants/Images';
 import PickerComp from '../../../components/modal/pickerModal/PickerModal';
 import AppButton from '../../../components/globals/AppButton';
 import styles from './styles';
-import Colors from '../../../constants/Colors';
-import storage from '@react-native-firebase/storage';
-// agar Firestore bhi use karna ho to uncomment karo
-// import firestore from '@react-native-firebase/firestore';
+
+import {
+  addPostAsyncThunk,
+  getUserProfileByIdThunk,
+  postUpdateByIdAsyncThunk,
+} from '../../../redux/asyncThunk/auth.asyncThunk';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../../redux/store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused, useRoute } from '@react-navigation/native';
+import { GetProfileResponse } from '../../../types/types';
 
 type ImagePath = string;
 
@@ -25,11 +32,15 @@ const UploadScreen: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<ImagePath>('');
   const [caption, setCaption] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
-  const [transferred, setTransferred] = useState<number>(0);
-
+  const [id, setId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
   const showModal = () => setModalVisible(true);
   const hideModal = () => setModalVisible(false);
-
+  const isFocused = useIsFocused();
+  const route = useRoute<any>();
+  const { editMode, caption: editCaption, imageUrl } = route.params || {};
+  console.log(route.params.postId, '........post id by route params');
   const setImage = (imagePath: string) => {
     setSelectedImage(imagePath);
   };
@@ -37,63 +48,102 @@ const UploadScreen: React.FC = () => {
   const handleCaptionChange = (text: string) => {
     setCaption(text);
   };
+  useEffect(() => {
+    if (editMode) {
+      setCaption(editCaption || '');
+      setSelectedImage(imageUrl || '');
+    }
+  }, [editMode]);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedId = await AsyncStorage.getItem('userId');
+        setId(storedId);
+        console.log('User ID from AsyncStorage:', storedId);
+      } catch (e) {
+        console.log('AsyncStorage read error:', e);
+      }
+    };
 
-  // 🔥 IMAGE UPLOAD TO FIREBASE STORAGE
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    if (isFocused && id) {
+      getProfile();
+    }
+  }, [isFocused, id]);
+
+  const getProfile = () => {
+    if (!id) return;
+
+    dispatch(getUserProfileByIdThunk({ id }))
+      .unwrap()
+      .then((res: GetProfileResponse) => {
+        setUserName(res.data.username);
+      })
+      .catch(err => {
+        console.log('Profile fetch error:', err);
+      });
+  };
+
   const handleUpload = async () => {
-    if (!selectedImage) {
-      Alert.alert('Error', 'Please select an image first');
+    if (!caption.trim() && !selectedImage && !imageUrl) {
+      Alert.alert('Error', 'Please add a caption or select an image');
+      return;
+    }
+
+    if (!id || !userName) {
+      Alert.alert('Error', 'User not found. Please login again.');
       return;
     }
 
     try {
       setUploading(true);
-      setTransferred(0);
 
-      // image-crop-picker se jo path aata hai
-      const fileUri = selectedImage; // like "file:///..."
+      // Pass the existing imageUrl if no new image is selected in edit mode
+      const payload = {
+        userId: id as string,
+        caption,
+        username: userName,
+        imageUri: selectedImage || (editMode ? imageUrl : undefined),
+      };
 
-      // unique file name
-      const fileName = `posts/${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 8)}.jpg`;
+      let resultAction;
 
-      const reference = storage().ref(fileName);
+      if (editMode && route.params.postId) {
+        // Update post
+        resultAction = await dispatch(
+          postUpdateByIdAsyncThunk({ ...payload, postId: route.params.postId }),
+        );
 
-      const task = reference.putFile(fileUri);
+        if (postUpdateByIdAsyncThunk.fulfilled.match(resultAction)) {
+          Alert.alert('Success', 'Post updated successfully!');
+          setCaption('');
+          setSelectedImage('');
+        } else {
+          const errorMsg =
+            (resultAction.payload as string) || 'Failed to update post';
+          Alert.alert('Error', errorMsg);
+        }
+      } else {
+        // Create new post
+        resultAction = await dispatch(addPostAsyncThunk(payload));
 
-      // progress listener
-      task.on('state_changed', taskSnapshot => {
-        const progress =
-          (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes) * 100;
-        setTransferred(Math.round(progress));
-      });
-
-      // wait for upload
-      await task;
-
-      // get download URL
-      const downloadURL = await reference.getDownloadURL();
-      console.log('✅ Image URL:', downloadURL);
-      console.log('📝 Caption:', caption);
-
-      // 🔹 OPTIONAL: Firestore me save karna ho to
-      // await firestore().collection('posts').add({
-      //   caption,
-      //   imageUrl: downloadURL,
-      //   createdAt: firestore.FieldValue.serverTimestamp(),
-      //   // userId: 'currentUserId',
-      // });
-
-      Alert.alert('Success', 'Image uploaded successfully!');
-
-      // reset state
-      setSelectedImage('');
-      setCaption('');
-      setUploading(false);
-      setTransferred(0);
+        if (addPostAsyncThunk.fulfilled.match(resultAction)) {
+          Alert.alert('Success', 'Post uploaded successfully!');
+          setCaption('');
+          setSelectedImage('');
+        } else {
+          const errorMsg =
+            (resultAction.payload as string) || 'Failed to upload post';
+          Alert.alert('Error', errorMsg);
+        }
+      }
     } catch (error: any) {
       console.log('Upload error: ', error);
-      Alert.alert('Upload failed', error?.message || 'Something went wrong');
+      Alert.alert('Error', error?.message || 'Something went wrong');
+    } finally {
       setUploading(false);
     }
   };
@@ -103,89 +153,59 @@ const UploadScreen: React.FC = () => {
   return (
     <ScreenWrapper>
       <View style={styles.buttonContainer}>
-        {/* Caption Input */}
-        <View style={{ width: '95%', marginTop: 20 }}>
+        <View style={styles.captionWrapper}>
           <TextInput
             value={caption}
             onChangeText={handleCaptionChange}
-            style={{
-              height: 100,
-              borderWidth: 0.5,
-              borderColor: Colors.gray,
-              width: '95%',
-              paddingStart: 20,
-              borderRadius: 10,
-            }}
+            style={styles.captionInput}
             placeholder="Enter your caption"
             multiline
           />
         </View>
 
-        {/* Image Preview + Post Button */}
         <View style={styles.postContainer}>
           {selectedImage !== '' && (
-            <View style={{ width: '100%', height: 200 }}>
+            <View style={styles.selectedImageWrapper}>
               <Image
                 style={styles.postImageStyle}
                 source={{ uri: selectedImage }}
               />
 
-              <View
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'flex-end',
-                  marginEnd: 20,
-                }}
-              >
+              <View style={styles.closeIconWrapper}>
                 <TouchableOpacity
                   onPress={() => setSelectedImage('')}
-                  style={{
-                    backgroundColor: Colors.white,
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    margin: 8,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
+                  style={styles.closeButton}
                 >
-                  <Image
-                    style={{ width: 15, height: 15 }}
-                    source={IMAGES.close}
-                  />
+                  <Image style={styles.closeIcon} source={IMAGES.close} />
                 </TouchableOpacity>
               </View>
             </View>
-          )}
-
-          {uploading && (
-            <Text style={{ marginTop: 8 }}>Uploading: {transferred}%</Text>
           )}
 
           <AppButton
             disabled={isDisabled}
             title={uploading ? 'Uploading...' : 'Post'}
             onPress={handleUpload}
-            style={{
-              ...styles.buttonStyle,
-              backgroundColor: isDisabled ? Colors.gray : Colors.black,
-            }}
-            titleStyle={{
-              ...styles.titleStyle,
-              color: isDisabled ? Colors.black : Colors.white,
-            }}
+            style={[
+              styles.buttonStyle,
+              isDisabled ? styles.buttonDisabled : styles.buttonEnabled,
+            ]}
+            titleStyle={[
+              styles.titleStyle,
+              isDisabled
+                ? styles.buttonTitleDisabled
+                : styles.buttonTitleEnabled,
+            ]}
           />
         </View>
 
-        {/* Add Button */}
-        <View style={{ flex: 1 }}>
+        <View style={styles.addButtonWrapper}>
           <Pressable onPress={showModal} style={styles.addButtonStyle}>
             <Image source={IMAGES.plus} style={styles.plusIcon} />
           </Pressable>
         </View>
       </View>
 
-      {/* Modal for Picker */}
       <PickerComp
         setImageCallback={setImage}
         imageCancel={IMAGES.close}

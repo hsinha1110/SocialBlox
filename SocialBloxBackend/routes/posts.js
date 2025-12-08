@@ -6,7 +6,7 @@ const Post = require("../modals/Post");
 const upload = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 
-// 🔹 Add Post
+// Add Post
 router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
   try {
     let imageUrl = "";
@@ -54,14 +54,34 @@ router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
   }
 });
 
-// 🔹 Update Post
-router.put("/updatepost/:id", async (req, res) => {
+// Update Post
+router.put("/updatepost/:id", upload.single("imageUrl"), async (req, res) => {
   try {
     console.log("REQ BODY =>", req.body);
+    console.log("REQ FILE =>", req.file);
 
+    let imageUrl = req.body.imageUrl; // fallback to existing imageUrl if no new file
+
+    // If new file is uploaded, upload it to Cloudinary
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "socialblox/posts",
+      });
+
+      imageUrl = result.secure_url;
+
+      // Delete local temp file
+      try {
+        await fs.unlink(req.file.path);
+      } catch (e) {
+        console.warn("Could not delete local file:", e.message);
+      }
+    }
+
+    // Update post with new data
     const updatedPost = await Post.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: req.body },
+      { $set: { ...req.body, imageUrl } },
       { new: true }
     );
 
@@ -78,11 +98,16 @@ router.put("/updatepost/:id", async (req, res) => {
       data: updatedPost,
     });
   } catch (error) {
-    res.status(500).json(error);
+    console.error("Update post error:", error);
+    res.status(500).json({
+      status: false,
+      message: "Something went wrong while updating the post",
+      error: error.message,
+    });
   }
 });
 
-// 🔹 Delete Post
+//  Delete Post
 router.delete("/deletepost/:id", async (req, res) => {
   try {
     const postId = req.params.id;
@@ -114,10 +139,10 @@ router.delete("/deletepost/:id", async (req, res) => {
   }
 });
 
-// 🔹 Get all posts
+//   Get all posts
 router.get("/getpost", async (req, res) => {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().sort({ createdAt: -1 }); // ⬅️ SORT ADDED
 
     res.status(200).json({
       status: true,

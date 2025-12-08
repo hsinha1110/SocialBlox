@@ -17,6 +17,12 @@ export enum IMAGES {
   camera = require('../assets/images/camera.png'),
   gallery = require('../assets/images/gallery.png'),
   dots = require('../assets/images/dots.png'),
+  like = require('../assets/images/like.png'),
+  like_fill = require('../assets/images/like_fill.png'),
+  comments = require('../assets/images/comment.png'),
+  placeholder = require('../assets/images/placeholder.png'),
+  pencil = require('../assets/images/pencil.png'),
+  delete = require('../assets/images/delete.png'),
 
   //light icons
   home_light = require('../assets/images/home_light.png'),

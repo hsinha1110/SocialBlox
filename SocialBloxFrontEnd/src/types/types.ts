@@ -1,5 +1,3 @@
-// Type for register request payload
-// REGISTER REQUEST PAYLOAD
 export interface RegisterPayload {
   username: string;
   emailId: string;
@@ -8,7 +6,6 @@ export interface RegisterPayload {
   password: string;
 }
 
-// REGISTER RESPONSE (from backend)
 export interface RegisterResponse {
   status: boolean;
   message: string;
@@ -18,7 +15,6 @@ export interface RegisterResponse {
   };
 }
 
-// USER MODEL (used in Redux)
 export interface User {
   _id: string;
   username: string;
@@ -41,11 +37,8 @@ export interface LoginSuccessPayload {
   data: UserData;
 }
 
-// ----------------------
-// Initial State
-// ----------------------
 export interface LoginPayload {
-  emailId: string; // must match backend
+  emailId: string;
   password: string;
 }
 
@@ -54,10 +47,7 @@ export interface LoginResponse {
   message: string;
   userId?: string;
   accessToken?: string;
-}
-export interface GetPostPayload {
-  userId?: string;
-  page?: number;
+  username?: string;
 }
 
 export interface PostItem {
@@ -66,7 +56,10 @@ export interface PostItem {
   image: string;
   createdAt: string;
 }
-
+export interface GetPostPayload {
+  userId?: string;
+  page?: number;
+}
 export interface GetPostResponse {
   posts: never[];
   message: string;
@@ -102,4 +95,16 @@ export interface UserProfile {
 
 export interface GetProfileResponse {
   data: UserProfile;
+}
+export interface AddPostRequest {
+  userId: string;
+  caption: string;
+  username: string;
+  imageUri?: string | null;
+}
+
+export interface AddPostResponse {
+  status: boolean;
+  message: string;
+  data: any;
 }

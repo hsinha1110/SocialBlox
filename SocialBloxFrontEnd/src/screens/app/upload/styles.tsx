@@ -1,70 +1,130 @@
-import {
-  moderateScale,
-  moderateVerticalScale,
-} from 'react-native-size-matters';
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { moderateScale } from 'react-native-size-matters';
 import Colors from '../../../constants/Colors';
+import { FONTS } from '../../../constants/Fonts';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  postContainer: {
-    alignItems: 'center',
-    width: '100%',
-    justifyContent: 'center',
-    height: Dimensions.get('window').height / 1.5,
-  },
   buttonContainer: {
-    height: Dimensions.get('window').height / 1.18,
-    alignItems: 'flex-end',
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: moderateScale(16),
+  },
+
+  // Caption wrapper
+  captionWrapper: {
+    width: '95%',
+    marginTop: moderateScale(20),
+    alignSelf: 'center',
+  },
+
+  captionInput: {
+    height: moderateScale(100),
+    borderWidth: 0.5,
+    borderColor: Colors.gray,
     width: '100%',
-  },
-  buttonStyle: {
-    borderWidth: 1,
-    borderColor: 'black',
-    backgroundColor: Colors.white,
-    width: '90%',
-  },
-  titleStyle: { color: Colors.black },
-  postImageStyle: {
-    width: '90%',
-    marginHorizontal: 20,
-    height: 200,
-    borderRadius: 10,
-    position: 'absolute',
-  },
-  removeButton: {
-    backgroundColor: Colors.white,
-    position: 'absolute',
-    alignItems: 'flex-end',
-  },
-  removeImage: {
-    width: 20,
-    height: 20,
-  },
-  addButtonStyle: {
-    backgroundColor: Colors.black,
-    width: moderateScale(50),
-    height: moderateScale(50),
-    borderRadius: moderateScale(25),
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    position: 'absolute',
-    bottom: 50,
-    right: 10,
-  },
-  plusIcon: { width: 20, height: 20, tintColor: Colors.white },
-  disabledButton: {
-    height: moderateScale(45),
-    backgroundColor: Colors.gray,
-    width: '90%',
+    paddingStart: moderateScale(16),
     borderRadius: moderateScale(10),
+    textAlignVertical: 'top',
+    fontFamily: FONTS.Regular,
+    fontSize: moderateScale(14),
+    color: Colors.black,
+  },
+
+  // Post container
+  postContainer: {
+    width: '100%',
+    marginTop: moderateScale(20),
+    alignItems: 'center',
+  },
+
+  selectedImageWrapper: {
+    width: '100%',
+    height: moderateScale(200),
+  },
+
+  postImageStyle: {
+    width: '100%',
+    height: '100%',
+    borderRadius: moderateScale(12),
+  },
+
+  closeIconWrapper: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginEnd: moderateScale(20),
+    position: 'absolute',
+    top: moderateScale(8),
+    right: moderateScale(-10),
+  },
+
+  closeButton: {
+    backgroundColor: Colors.white,
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: moderateVerticalScale(30),
+    elevation: 3,
+  },
+
+  closeIcon: {
+    width: moderateScale(15),
+    height: moderateScale(15),
+    resizeMode: 'contain',
+  },
+
+  // AppButton styles
+  buttonStyle: {
+    marginTop: moderateScale(20),
+    borderRadius: moderateScale(10),
+    paddingVertical: moderateScale(10),
+  },
+
+  buttonEnabled: {
+    backgroundColor: Colors.black,
+  },
+
+  buttonDisabled: {
+    backgroundColor: Colors.gray,
+  },
+
+  titleStyle: {
+    fontFamily: FONTS.Bold,
+    fontSize: moderateScale(16),
+  },
+
+  buttonTitleEnabled: {
+    color: Colors.white,
+  },
+
+  buttonTitleDisabled: {
+    color: Colors.black,
+  },
+
+  // Add button wrapper
+  addButtonWrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: moderateScale(20),
+  },
+
+  addButtonStyle: {
+    alignSelf: 'center',
+    width: moderateScale(60),
+    height: moderateScale(60),
+    borderRadius: moderateScale(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.black,
+    elevation: 4,
+  },
+
+  plusIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    resizeMode: 'contain',
+    tintColor: Colors.white,
   },
 });
+
 export default styles;

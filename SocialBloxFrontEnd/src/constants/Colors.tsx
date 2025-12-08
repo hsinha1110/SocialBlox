@@ -19,6 +19,6 @@ export default {
   lightgray: '#363942',
   dark_gray: '#5C5B5C',
   yellow: '#FFBC10',
-  transparent: 'rgba(0, 0, 0, 0.5)',
+  transparent: 'rgba(0, 0, 0, 0.2)',
   light_transparent: '#333',
 };

@@ -1,10 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ASYNC_ROUTES } from '../constants';
+import { ASYNC_ROUTES, SERVICE_ROUTES } from '../constants';
 
 import {
+  addPostService,
+  deletePostByIdService,
   getPostService,
   getUserProfileByIdServices,
   LoginService,
+  postUpdateServiceById,
   RegisterService,
 } from '../services/services';
 
@@ -17,6 +20,8 @@ import {
   GetProfileResponse,
   GetProfileParams,
   ErrorResponse,
+  AddPostRequest,
+  AddPostResponse,
 } from '../../types/types';
 
 /* -------------------------------------------------------------------------- */
@@ -79,12 +84,60 @@ export const getUserProfileByIdThunk = createAsyncThunk<
   try {
     const response = await getUserProfileByIdServices({ id });
 
-    console.log(response, '✔ thunk profile response');
+    console.log(response, 'thunk profile response');
 
-    return response; // already 'data' from service
+    return response;
   } catch (error: any) {
     return rejectWithValue(
       error?.response?.data || { message: 'Unable to fetch profile' },
     );
+  }
+});
+
+// Add Post
+export const addPostAsyncThunk = createAsyncThunk(
+  ASYNC_ROUTES.ADD_POST,
+  async (payload: AddPostRequest, { rejectWithValue }) => {
+    try {
+      const response = await addPostService(payload);
+      return response.data;
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Something went wrong while adding post';
+      return rejectWithValue(msg);
+    }
+  },
+);
+
+// Delete Post By Id Thunk
+export const deletePostByIdThunk = createAsyncThunk(
+  ASYNC_ROUTES.DELETE_POST_BY_ID,
+  async ({ postId }: { postId: string }, { rejectWithValue }) => {
+    try {
+      const response = await deletePostByIdService(postId);
+      return { postId, response };
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data || 'Delete failed');
+    }
+  },
+);
+
+//Post Update Thunk
+export const postUpdateByIdAsyncThunk = createAsyncThunk<
+  AddPostResponse,
+  AddPostRequest & { postId: string },
+  { rejectValue: string }
+>(SERVICE_ROUTES.UPDATE_POST_BY_ID, async (payload, { rejectWithValue }) => {
+  try {
+    const response = await postUpdateServiceById(payload);
+    return response;
+  } catch (error: any) {
+    const msg =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Something went wrong while editing post';
+    return rejectWithValue(msg);
   }
 });

@@ -19,7 +19,6 @@ const ProfileScreen: React.FC = () => {
   console.log(userName, '...userName');
   const [userEmail, setUserEmail] = useState('');
 
-  // ⭐ Load ID from AsyncStorage
   useEffect(() => {
     const fetchId = async () => {
       const storedId = await AsyncStorage.getItem('userId');
@@ -30,7 +29,6 @@ const ProfileScreen: React.FC = () => {
     fetchId();
   }, []);
 
-  // ⭐ Fetch profile when screen focused & id available
   useEffect(() => {
     if (isFocused && id) {
       getProfile();
@@ -71,7 +69,6 @@ const ProfileScreen: React.FC = () => {
           onPress={() => {}}
         />
 
-        {/* Followers / Following / Posts */}
         <View style={styles.socialContainer}>
           <View style={styles.countContainer}>
             <Text style={styles.count}>0</Text>
