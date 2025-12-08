@@ -21,33 +21,70 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { SCREEN_NAMES } from '../../../constants/ScreenNames';
 
 const HomeScreen: FC = () => {
+  const [postId, setPostId] = useState<string>();
   const [userName, setUserName] = useState<string>();
+  const [userId, setUserId] = useState<string>();
   const [openModal, setOpenModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProp<any>>();
+  const [count, setCount] = useState<number>();
   const { posts, loading, error } = useSelector(
     (state: RootState) => state.post,
   );
+  console.log(userName, 'userName');
+  console.log(postId, 'postId');
+  console.log(userId, 'userId');
 
   useEffect(() => {
     dispatch(getPostThunk())
       .unwrap()
       .then((res: any) => {
+        console.log(res, '...get post thunk');
         if (res?.data?.[0]?.username) {
+          setPostId(res.data[0]._id);
           setUserName(res.data[0].username);
+          setUserId(res.data[0].userId);
         }
       })
       .catch(err => console.log(err, '...err'));
   }, [dispatch]);
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const response = await fetch(
+          'http://192.168.1.40:8200/socialapp/api/post/comment/getcomments',
+        );
+
+        const result = await response.json(); // Convert response to JSON
+        setCount(result?.data?.length || 0);
+        console.log('Full Response:', result);
+
+        if (result?.data) {
+          result.data.forEach((item: any) => {
+            console.log(item._id);
+          });
+        }
+      } catch (error) {
+        console.log('Error fetching comments:', error);
+      }
+    };
+
+    fetchComments();
+  }, []);
 
   const renderItem = ({ item }: any) => (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Image source={IMAGES.placeholder} style={styles.profileImage} />
-        <Text style={styles.userName}>{userName}</Text>
-
-        {/* 3 DOTS BUTTON - opens modal */}
+        <Image
+          style={styles.profileImage}
+          source={{
+            uri: item.profilePic
+              ? item.profilePic
+              : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png', // fallback
+          }}
+        />
+        <Text style={styles.userName}>{item.username}</Text>
         <TouchableOpacity
           onPress={() => {
             setSelectedPost(item);
@@ -81,10 +118,18 @@ const HomeScreen: FC = () => {
         </View>
 
         <View style={styles.actionItem}>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate(SCREEN_NAMES.CommentScreen, {
+                postId: item._id,
+                userId: item.userId,
+                username: item.username,
+              })
+            }
+          >
             <Image source={IMAGES.comments} style={styles.icon} />
           </TouchableOpacity>
-          <Text style={styles.actionText}>0 Comments</Text>
+          <Text style={styles.actionText}>{count} Comments</Text>
         </View>
       </View>
     </View>
@@ -133,6 +178,9 @@ const HomeScreen: FC = () => {
           />
 
           <OptionModal
+            title="Post Options"
+            titleEdit="Edit Post"
+            titleDelete="Delete Post"
             visible={openModal}
             onClose={() => setOpenModal(false)}
             onEdit={() => {

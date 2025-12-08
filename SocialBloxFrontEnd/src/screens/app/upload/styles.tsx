@@ -10,7 +10,6 @@ const styles = StyleSheet.create({
     paddingTop: moderateScale(16),
   },
 
-  // Caption wrapper
   captionWrapper: {
     width: '95%',
     marginTop: moderateScale(20),
@@ -30,7 +29,6 @@ const styles = StyleSheet.create({
     color: Colors.black,
   },
 
-  // Post container
   postContainer: {
     width: '100%',
     marginTop: moderateScale(20),
@@ -73,7 +71,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
-  // AppButton styles
   buttonStyle: {
     marginTop: moderateScale(20),
     borderRadius: moderateScale(10),
@@ -101,11 +98,10 @@ const styles = StyleSheet.create({
     color: Colors.black,
   },
 
-  // Add button wrapper
   addButtonWrapper: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingBottom: moderateScale(20),
+    paddingTop: moderateScale(190),
   },
 
   addButtonStyle: {
@@ -124,6 +120,12 @@ const styles = StyleSheet.create({
     height: moderateScale(24),
     resizeMode: 'contain',
     tintColor: Colors.white,
+  },
+  title: {
+    fontSize: moderateScale(24),
+    fontWeight: 'bold',
+    marginBottom: moderateScale(10),
+    color: Colors.black,
   },
 });
 

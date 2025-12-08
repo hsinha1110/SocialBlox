@@ -2,13 +2,17 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ASYNC_ROUTES, SERVICE_ROUTES } from '../constants';
 
 import {
+  addCommentService,
   addPostService,
+  deleteCommentsByIdService,
   deletePostByIdService,
+  getCommentService,
   getPostService,
   getUserProfileByIdServices,
   LoginService,
   postUpdateServiceById,
   RegisterService,
+  updateCommentByIdService,
 } from '../services/services';
 
 import {
@@ -22,6 +26,10 @@ import {
   ErrorResponse,
   AddPostRequest,
   AddPostResponse,
+  AddCommentRequest,
+  AddCommentResponse,
+  GetCommentResponse,
+  UpdateCommentRequest,
 } from '../../types/types';
 
 /* -------------------------------------------------------------------------- */
@@ -141,3 +149,70 @@ export const postUpdateByIdAsyncThunk = createAsyncThunk<
     return rejectWithValue(msg);
   }
 });
+
+// Add Comment Thunk
+export const addCommentAsyncThunk = createAsyncThunk<
+  AddCommentResponse, // Thunk return type
+  AddCommentRequest, // Argument type
+  { rejectValue: string } // Reject value type
+>(
+  ASYNC_ROUTES.GET_COMMENTS, // Action type string
+  async (payload: AddCommentRequest, { rejectWithValue }) => {
+    try {
+      const response = await addCommentService(payload);
+      return response; // This will be returned as the fulfilled value
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to add comment');
+    }
+  },
+);
+
+// Get Comments Thunk
+export const getCommentsThunk = createAsyncThunk<
+  GetCommentResponse, // Return type: GetCommentResponse
+  { postId: string }, // Argument type: Accept postId parameter
+  { rejectValue: string }
+>(
+  'comments/getComments', // Action type
+  async ({ postId }, { rejectWithValue }) => {
+    try {
+      const response = await getCommentService(postId); // Pass postId to the service
+      return response; // Return the response, which will be GetCommentResponse
+    } catch (err: any) {
+      return rejectWithValue(err?.message || 'Unable to fetch comments');
+    }
+  },
+);
+
+// Delete Post By Id Thunk
+export const deleteCommentByIdThunk = createAsyncThunk(
+  ASYNC_ROUTES.DELETE_COMMENTS_BY_ID,
+  async ({ commentId }: { commentId: string }, { rejectWithValue }) => {
+    try {
+      const response = await deleteCommentsByIdService(commentId);
+      return { commentId, response };
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data || 'Delete failed');
+    }
+  },
+);
+// Update Comment Thunk
+export const updateCommentByIdAsyncThunk = createAsyncThunk<
+  AddCommentResponse, // 👈 agar response same hai to use this
+  UpdateCommentRequest, // 👈 naya type
+  { rejectValue: string }
+>(
+  SERVICE_ROUTES.UPDATE_COMMENTS_BY_ID,
+  async ({ commentId, comment }, { rejectWithValue }) => {
+    try {
+      const response = await updateCommentByIdService(commentId, { comment });
+      return response;
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Something went wrong while editing comment';
+      return rejectWithValue(msg);
+    }
+  },
+);

@@ -8,6 +8,9 @@ interface OptionModalProps {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  title: string;
+  titleDelete: string;
+  titleEdit: string;
 }
 
 const OptionModal: React.FC<OptionModalProps> = ({
@@ -15,6 +18,9 @@ const OptionModal: React.FC<OptionModalProps> = ({
   onClose,
   onEdit,
   onDelete,
+  title,
+  titleDelete,
+  titleEdit,
 }) => {
   return (
     <Modal
@@ -28,7 +34,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
         <TouchableOpacity style={styles.overlayTouchable} onPress={onClose} />
 
         <View style={styles.modalBox}>
-          <Text style={styles.title}>Post Options</Text>
+          <Text style={styles.title}>{title}</Text>
 
           {/* EDIT POST */}
           <TouchableOpacity
@@ -39,7 +45,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
             }}
           >
             <Image source={IMAGES.pencil} style={{ width: 20, height: 20 }} />
-            <Text style={styles.optionText}> Edit Post</Text>
+            <Text style={styles.optionText}>{titleEdit}</Text>
           </TouchableOpacity>
 
           {/* DELETE POST */}
@@ -52,7 +58,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
           >
             <Image source={IMAGES.delete} style={{ width: 20, height: 20 }} />
             <Text style={[styles.optionText, { color: 'red' }]}>
-              Delete Post
+              {titleDelete}
             </Text>
           </TouchableOpacity>
         </View>

@@ -41,6 +41,7 @@ const ProfileScreen: React.FC = () => {
     dispatch(getUserProfileByIdThunk({ id }))
       .unwrap()
       .then((res: GetProfileResponse) => {
+        console.log(res, '...res get profile');
         setUserName(res.data.username);
         setUserEmail(res.data.emailId);
       })

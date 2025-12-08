@@ -2,8 +2,10 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { METHODS, replaceUrl, SERVICE_ROUTES } from '../constants';
 
 import {
+  AddCommentResponse,
   AddPostRequest,
   AddPostResponse,
+  GetCommentResponse,
   GetPostResponse,
   GetProfileParams,
   GetProfileResponse,
@@ -12,7 +14,7 @@ import {
   RegisterPayload,
   RegisterResponse,
 } from '../../types/types';
-
+import { AddCommentRequest } from '../../types/types';
 // Register Service
 export const RegisterService = async (
   data: RegisterPayload,
@@ -169,10 +171,10 @@ export const postUpdateServiceById = async (
       uri: imageUri,
       name: fileName,
       type: mimeType,
-    } as any); // backend expects "imageUrl"
+    } as any);
   }
 
-  // Replace :id in URL
+  // ✅ Correctly replace :id in URL
   const url = replaceUrl(SERVICE_ROUTES.UPDATE_POST_BY_ID, { id: postId });
 
   const { data } = await axios.put<AddPostResponse>(url, formData, {
@@ -182,4 +184,77 @@ export const postUpdateServiceById = async (
   });
 
   return data;
+};
+
+// Add Comment Service
+export const addCommentService = async (
+  payload: AddCommentRequest,
+): Promise<AddCommentResponse> => {
+  try {
+    const config: AxiosRequestConfig = {
+      url: SERVICE_ROUTES.ADD_COMMENTS, // Your endpoint URL
+      method: 'POST',
+      data: payload,
+    };
+
+    const response = await axios.request<AddCommentResponse>(config);
+    return response.data; // Return the response data as the AddCommentResponse
+  } catch (error: any) {
+    console.error('Add Comment Service Error:', error);
+    throw new Error(error?.response?.data?.message || 'Unable to add comment');
+  }
+};
+// Get Posts Service
+export const getCommentService = async (
+  postId: string,
+): Promise<GetCommentResponse> => {
+  try {
+    const config: AxiosRequestConfig = {
+      url: SERVICE_ROUTES.GET_COMMENTS, // Make sure this endpoint returns all comments
+      method: METHODS.GET,
+    };
+
+    const response = await axios.request<GetCommentResponse>(config);
+    return response.data; // Return the actual response data (comments)
+  } catch (error: any) {
+    console.error(
+      'Error in getCommentService:',
+      error?.response?.data || error.message,
+    );
+    throw new Error(
+      error?.response?.data?.message || 'Unable to fetch comments',
+    );
+  }
+};
+// Delete Comments By Id Service
+export const deleteCommentsByIdService = async (commentId: string) => {
+  const url = replaceUrl(SERVICE_ROUTES.DELETE_COMMENTS_BY_ID, {
+    id: commentId,
+  });
+
+  const response = await axios({
+    url,
+    method: METHODS.DELETE,
+  });
+
+  return response.data;
+};
+
+// Update Comment By Id Service
+// Update Comment By Id Service
+export const updateCommentByIdService = async (
+  commentId: string,
+  data: { comment: string },
+) => {
+  const url = replaceUrl(SERVICE_ROUTES.UPDATE_COMMENTS_BY_ID, {
+    id: commentId,
+  });
+
+  const response = await axios({
+    url,
+    method: METHODS.PUT, // ✅ UPDATE ke liye PUT ya PATCH (jo backend use kar raha hai)
+    data, // { comment: 'new text' }
+  });
+
+  return response.data;
 };

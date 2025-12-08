@@ -40,7 +40,6 @@ const UploadScreen: React.FC = () => {
   const isFocused = useIsFocused();
   const route = useRoute<any>();
   const { editMode, caption: editCaption, imageUrl } = route.params || {};
-  console.log(route.params.postId, '........post id by route params');
   const setImage = (imagePath: string) => {
     setSelectedImage(imagePath);
   };
@@ -54,6 +53,7 @@ const UploadScreen: React.FC = () => {
       setSelectedImage(imageUrl || '');
     }
   }, [editMode]);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -100,8 +100,6 @@ const UploadScreen: React.FC = () => {
 
     try {
       setUploading(true);
-
-      // Pass the existing imageUrl if no new image is selected in edit mode
       const payload = {
         userId: id as string,
         caption,
@@ -127,16 +125,13 @@ const UploadScreen: React.FC = () => {
           Alert.alert('Error', errorMsg);
         }
       } else {
-        // Create new post
-        resultAction = await dispatch(addPostAsyncThunk(payload));
-
-        if (addPostAsyncThunk.fulfilled.match(resultAction)) {
+        try {
+          await dispatch(addPostAsyncThunk(payload)).unwrap();
           Alert.alert('Success', 'Post uploaded successfully!');
           setCaption('');
           setSelectedImage('');
-        } else {
-          const errorMsg =
-            (resultAction.payload as string) || 'Failed to upload post';
+        } catch (err) {
+          const errorMsg = (err as string) || 'Failed to upload post';
           Alert.alert('Error', errorMsg);
         }
       }
@@ -152,6 +147,8 @@ const UploadScreen: React.FC = () => {
 
   return (
     <ScreenWrapper>
+      <Text style={styles.title}>Upload Post</Text>
+
       <View style={styles.buttonContainer}>
         <View style={styles.captionWrapper}>
           <TextInput
