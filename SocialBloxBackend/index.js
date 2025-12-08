@@ -8,7 +8,8 @@ const userRouter = require("./routes/users");
 const authRouter = require("./routes/auth");
 const postRouter = require("./routes/posts");
 const commentRouter = require("./routes/comment");
-
+const multer = require("multer");
+const path = require("path");
 dotenv.config();
 
 // Middleware

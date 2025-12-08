@@ -1,12 +1,13 @@
+// middleware/upload.js
 const multer = require("multer");
 const path = require("path");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    return cb(null, "./uploads");
+    cb(null, "uploads/"); // folder bana lena root me
   },
   filename: (req, file, cb) => {
-    return cb(null, `${Date.now()}_${file.originalname}`);
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 

@@ -1,39 +1,68 @@
 const router = require("express").Router();
-const Post = require("../modals/Post");
 const mongoose = require("mongoose");
-const upload = require("../middleware/upload");
-const Users = require("../modals/Users");
+const fs = require("fs/promises");
 
-// add post
+const Post = require("../modals/Post");
+const upload = require("../middleware/upload");
+const cloudinary = require("../config/cloudinary");
+
+// 🔹 Add Post
 router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
   try {
-    const newPost = new Post(req.body);
+    let imageUrl = "";
+
+    console.log("📸 req.file =>", req.file);
+    console.log("📝 req.body =>", req.body);
+
+    // ✅ Agar file aayi hai to Cloudinary par upload karo
     if (req.file) {
-      newPost.imageUrl = req.file.filename;
-    }
-    newPost
-      .save()
-      .then(() => {
-        res
-          .status(200)
-          .json({ status: true, message: "Post aded successfully !" });
-      })
-      .catch((err) => {
-        res.status(500).json(err);
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "socialblox/posts",
       });
+
+      console.log("☁️ Cloudinary upload result =>", result);
+
+      imageUrl = result.secure_url;
+
+      // OPTIONAL: local temp file delete
+      try {
+        await fs.unlink(req.file.path);
+      } catch (e) {
+        console.warn("Could not delete local file:", e.message);
+      }
+    }
+
+    const newPost = new Post({
+      ...req.body,
+      imageUrl,
+    });
+
+    await newPost.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Post added successfully!",
+      data: newPost,
+    });
   } catch (err) {
-    res.status(500).json(err);
+    console.error("Add post error:", err);
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong while adding the post.",
+      error: err.message,
+    });
   }
 });
-// update post
+
+// 🔹 Update Post
 router.put("/updatepost/:id", async (req, res) => {
   try {
-    console.log("REQ BODY =>", req.body); // check if body aa rahi hai
+    console.log("REQ BODY =>", req.body);
 
     const updatedPost = await Post.findOneAndUpdate(
       { _id: req.params.id },
       { $set: req.body },
-      { new: true } // 👈 required
+      { new: true }
     );
 
     if (!updatedPost) {
@@ -53,99 +82,107 @@ router.put("/updatepost/:id", async (req, res) => {
   }
 });
 
-// delete post
+// 🔹 Delete Post
 router.delete("/deletepost/:id", async (req, res) => {
   try {
-    const userId = req.params.id;
-    // Check if the provided ID is a valid ObjectId
-    if (!mongoose.isValidObjectId(userId)) {
+    const postId = req.params.id;
+
+    if (!mongoose.isValidObjectId(postId)) {
       return res.status(400).json({
         status: false,
-        message: "User not found",
+        message: "Invalid post id",
       });
     }
-    const post = await Post.findOne({ _id: req.params.id });
-    if (post) {
-      Post.findByIdAndDelete({ _id: req.params.id }).then(() => {
-        res
-          .status(200)
-          .json({ status: true, message: "Post deleted successfully" });
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        status: false,
+        message: "Post not found with this id",
       });
-    } else {
-      res
-        .status(200)
-        .json({ status: false, message: "Post not found with this id" });
     }
+
+    await Post.findByIdAndDelete(postId);
+
+    return res.status(200).json({
+      status: true,
+      message: "Post deleted successfully",
+    });
   } catch (error) {
     res.status(500).json(error);
   }
 });
 
-//get post
-router.get("/getpost", (req, res) => {
-  Post.find()
-    .then((posts) => {
-      res.status(200).json({
-        status: true,
-        message: "Post fetched successfully!",
-        data: posts,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json(err);
-    });
-});
-
-// get post by id
-router.get("/getpost/:id", async (req, res) => {
+// 🔹 Get all posts
+router.get("/getpost", async (req, res) => {
   try {
-    Post.find({ userId: req.params.id })
-      .then((posts) => {
-        res.status(200).json({
-          status: true,
-          message: "Post fetched successfully",
-          data: posts,
-        });
-      })
-      .catch((err) => {
-        res.status(500).json(err);
-      });
+    const posts = await Post.find();
+
+    res.status(200).json({
+      status: true,
+      message: "Post fetched successfully!",
+      data: posts,
+    });
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// like
+// 🔹 Get posts by userId (agar ye intention hai)
+router.get("/user/:userId/posts", async (req, res) => {
+  try {
+    const posts = await Post.find({ userId: req.params.userId });
+
+    res.status(200).json({
+      status: true,
+      message: "Post fetched successfully",
+      data: posts,
+    });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// 🔹 Like / Unlike
 router.put("/like/:id", async (req, res) => {
   try {
-    const post = await Post.findOne({ _id: req.params.id });
-    let isLiked = false;
-    post.likes.map((item) => {
-      if (item == req.body.userId) {
-        isLiked = true;
-      }
-    });
+    const { userId } = req.body;
 
-    console.log(isLiked);
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        status: false,
+        message: "Post not found",
+      });
+    }
+
+    const isLiked = post.likes.includes(userId);
+
     if (isLiked) {
-      const res1 = await Post.updateOne(
+      await Post.updateOne(
         { _id: req.params.id },
-        { $pull: { likes: req.body.userId } }
+        { $pull: { likes: userId } }
       );
 
-      res
-        .status(200)
-        .json({ status: true, message: "Like  removed successfully" });
+      return res.status(200).json({
+        status: true,
+        message: "Like removed successfully",
+      });
     } else {
-      const res1 = await Post.updateOne(
+      await Post.updateOne(
         { _id: req.params.id },
-        { $push: { likes: req.body.userId } }
+        { $push: { likes: userId } }
       );
-      res
-        .status(200)
-        .json({ status: true, message: "Post liked  successfully" });
+
+      return res.status(200).json({
+        status: true,
+        message: "Post liked successfully",
+      });
     }
   } catch (err) {
+    console.error("Like error:", err);
     res.status(500).json(err);
   }
 });

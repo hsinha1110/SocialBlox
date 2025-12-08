@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@react-native-firebase/app": "^23.5.0",
+    "@react-native-firebase/firestore": "^23.5.0",
+    "add": "^2.0.6",
+    "yarn": "^1.22.22"
+  }
+}

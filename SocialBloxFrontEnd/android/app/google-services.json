@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "613983858528",
+    "project_id": "socialblox-e5717",
+    "storage_bucket": "socialblox-e5717.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:613983858528:android:154d5c0dc67a4619ddf805",
+        "android_client_info": {
+          "package_name": "com.socialblox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfP8XYbSBv4-bhTeNC_IJCX-u7aVCOSSY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

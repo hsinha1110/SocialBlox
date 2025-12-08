@@ -30,7 +30,6 @@ router.post("/register", async (req, res) => {
 });
 
 //login
-// login
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ emailId: req.body.emailId });
@@ -50,18 +49,20 @@ router.post("/login", async (req, res) => {
         .json({ status: false, message: "Wrong credentials" });
     }
 
-    // Generate token
+    // Generate and sign a JWT
     const accessToken = jwt.sign(
       { userId: user._id, username: user.username },
       secretKey,
       { expiresIn: "1h" }
     );
 
-    // 👉 Sirf message + token send karna hai
     res.status(200).json({
       status: true,
       message: "User found successfully",
-      accessToken: accessToken,
+      data: {
+        user,
+        accessToken,
+      },
     });
   } catch (error) {
     res.status(500).json(error);
