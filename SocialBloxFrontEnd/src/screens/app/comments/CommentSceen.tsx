@@ -23,7 +23,6 @@ import { Comment, CommentScreenParams } from '../../../types/types';
 import { IMAGES } from '../../../constants/Images';
 import OptionModal from '../../../components/modal/optionsModal/OptionsModal';
 import EditCommentModal from '../../../components/modal/editModal/EditModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CommentScreen: React.FC = () => {
   const route = useRoute();
@@ -35,7 +34,7 @@ const CommentScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [openModal, setOpenModal] = useState(false);
-  const [selectedComment, setSelectedComment] = useState<any>(null);
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editText, setEditText] = useState('');
@@ -43,11 +42,7 @@ const CommentScreen: React.FC = () => {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await dispatch(getCommentsThunk({ postId })).unwrap();
-        const commentIds = response.data.map((item: any) => item._id);
-        console.log(commentIds, '......comments id');
-        // Save IDs in async storage
-        await AsyncStorage.setItem('commentIds', JSON.stringify(commentIds));
+        const response = await dispatch(getCommentsThunk()).unwrap();
         setComments(response.data);
       } catch (err) {
         console.log('Error fetching comments:', err);
@@ -72,9 +67,7 @@ const CommentScreen: React.FC = () => {
         await dispatch(addCommentAsyncThunk(commentData)).unwrap();
         setNewComment('');
 
-        const updatedComments = await dispatch(
-          getCommentsThunk({ postId }),
-        ).unwrap();
+        const updatedComments = await dispatch(getCommentsThunk()).unwrap();
         setComments(updatedComments.data);
       } catch (err) {
         setError('Failed to add comment');
@@ -86,6 +79,7 @@ const CommentScreen: React.FC = () => {
       Alert.alert('Validation', 'Comment cannot be empty');
     }
   };
+
   const handleDeleteComments = async () => {
     if (selectedComment?._id) {
       try {
@@ -93,7 +87,7 @@ const CommentScreen: React.FC = () => {
           deleteCommentByIdThunk({ commentId: selectedComment._id }),
         ).unwrap();
 
-        // Local state se bhi comment hata do
+        // Remove the comment from the local state
         setComments(prev =>
           prev.filter(comment => comment._id !== selectedComment._id),
         );
@@ -109,6 +103,7 @@ const CommentScreen: React.FC = () => {
       setOpenModal(false);
     }
   };
+
   const handleUpdateComment = async () => {
     if (!selectedComment) return;
 
@@ -122,14 +117,13 @@ const CommentScreen: React.FC = () => {
         }),
       ).unwrap();
 
-      // Local UI update
+      // Update the comment locally
       setComments(prev =>
         prev.map(c =>
           c._id === selectedComment._id ? { ...c, comment: editText } : c,
         ),
       );
 
-      // Close modal
       setEditModalVisible(false);
       setSelectedComment(null);
     } catch (err) {
@@ -139,6 +133,7 @@ const CommentScreen: React.FC = () => {
       setEditLoading(false);
     }
   };
+
   return (
     <ScreenWrapper style={styles.container}>
       <Text style={styles.title}>Comments for Post</Text>
@@ -147,11 +142,12 @@ const CommentScreen: React.FC = () => {
       {/* Loading State */}
       {loading && <Text>Loading...</Text>}
       {error && <Text style={{ color: 'red' }}>{error}</Text>}
+
       <FlatList
         showsVerticalScrollIndicator={false}
         alwaysBounceVertical={false}
         data={comments}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={item => item._id.toString()}
         contentContainerStyle={styles.commentsList}
         renderItem={({ item }) => (
           <View style={styles.commentItem}>
@@ -161,19 +157,21 @@ const CommentScreen: React.FC = () => {
               }}
               style={styles.avatar}
             />
-
             <View style={{ flex: 1 }}>
               <Text style={styles.commentUser}>{item.username}</Text>
               <Text style={styles.commentText}>{item.comment}</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedComment(item);
-                setOpenModal(true);
-              }}
-            >
-              <Image source={IMAGES.dots} style={styles.dots} />
-            </TouchableOpacity>
+            {item.userId === userId && (
+              <TouchableOpacity
+                style={styles.dots}
+                onPress={() => {
+                  setSelectedComment(item);
+                  setOpenModal(true);
+                }}
+              >
+                <Image source={IMAGES.dots} style={styles.dots} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
       />
@@ -198,6 +196,7 @@ const CommentScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
+
       <OptionModal
         title="Comments Options"
         titleEdit="Edit Comment"
@@ -222,6 +221,7 @@ const CommentScreen: React.FC = () => {
           setSelectedComment(null);
         }}
         onUpdate={handleUpdateComment}
+        loading={editLoading}
       />
     </ScreenWrapper>
   );

@@ -55,6 +55,12 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     color: Colors.black,
   },
+  pencil: {
+    width: moderateScale(20),
+    height: moderateScale(20),
+    bottom: moderateScale(15),
+    left: moderateScale(25),
+  },
 });
 
 export default styles;

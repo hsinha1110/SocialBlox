@@ -6,6 +6,7 @@ import {
   addPostService,
   deleteCommentsByIdService,
   deletePostByIdService,
+  followService,
   getCommentService,
   getPostLikeByIdService,
   getPostService,
@@ -172,20 +173,17 @@ export const addCommentAsyncThunk = createAsyncThunk<
 
 // Get Comments Thunk
 export const getCommentsThunk = createAsyncThunk<
-  GetCommentResponse, // Return type: GetCommentResponse
-  { postId: string }, // Argument type: Accept postId parameter
-  { rejectValue: string }
->(
-  'comments/getComments', // Action type
-  async ({ postId }, { rejectWithValue }) => {
-    try {
-      const response = await getCommentService(postId); // Pass postId to the service
-      return response; // Return the response, which will be GetCommentResponse
-    } catch (err: any) {
-      return rejectWithValue(err?.message || 'Unable to fetch comments');
-    }
-  },
-);
+  GetCommentResponse, // return type
+  void, // NO ARGUMENTS
+  { rejectValue: string } // error type
+>(ASYNC_ROUTES.GET_COMMENTS, async (_, { rejectWithValue }) => {
+  try {
+    const response = await getCommentService();
+    return response;
+  } catch (err: any) {
+    return rejectWithValue(err?.message || 'Unable to fetch comments');
+  }
+});
 
 // Delete Post By Id Thunk
 export const deleteCommentByIdThunk = createAsyncThunk(
@@ -237,6 +235,21 @@ export const getPostLikeByIdThunk = createAsyncThunk<
           message: error?.message ?? 'Unable to like post',
         },
       );
+    }
+  },
+);
+// Follow User Thunk
+export const followUserThunk = createAsyncThunk(
+  ASYNC_ROUTES.FOLLOW,
+  async (
+    { userId, followUserId }: { userId: string; followUserId: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await followService(userId, followUserId);
+      return response; // Return response to update the Redux state or trigger any updates
+    } catch (error) {
+      return rejectWithValue(error); // Catch any error and reject the action
     }
   },
 );

@@ -67,5 +67,9 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(10),
     color: Colors.black,
   },
+  inputContainer: {
+    marginTop: moderateScale(30),
+    width: '100%',
+  },
 });
 export default styles;

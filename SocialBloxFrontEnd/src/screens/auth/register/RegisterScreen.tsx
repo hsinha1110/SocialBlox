@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { View, Platform, Alert } from 'react-native';
+import { View, Platform, Alert, TouchableOpacity, Image } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { IMAGES } from '../../../constants/Images';
 import CustomAuthLink from '../../../components/globals/CustomAuthLink';
@@ -22,6 +22,9 @@ import {
 } from '../../../utils/validationUtils';
 import Colors from '../../../constants/Colors';
 
+// Import PickerComp (your image picker modal)
+import PickerComp from '../../../components/modal/pickerModal/PickerModal'; // import your Picker component
+
 const RegisterScreen: FC = () => {
   const [userName, setUserName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -29,14 +32,14 @@ const RegisterScreen: FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [userNameError, setUserNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [mobileNumberError, setMobileNumberError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [selectedGender, setSelectedGender] = useState<number>(0);
-  console.log(selectedGender);
   const [loading, setLoading] = useState(false);
+  const [profilePic, setProfilePic] = useState<string | null>(null); // State for profile pic URL
+  const [modalVisible, setModalVisible] = useState(false); // State to control modal visibility
   const dispatch = useDispatch<AppDispatch>();
 
   const validate = () => {
@@ -71,6 +74,7 @@ const RegisterScreen: FC = () => {
 
     handleRegister();
   };
+
   const handleRegister = async () => {
     setLoading(true);
 
@@ -80,6 +84,7 @@ const RegisterScreen: FC = () => {
       mobile: mobile,
       gender: selectedGender === 0 ? 'male' : 'female',
       password: password,
+      profilePic, // Send profilePic with payload
     };
 
     setTimeout(async () => {
@@ -99,6 +104,11 @@ const RegisterScreen: FC = () => {
     }, 2000);
   };
 
+  // Callback function to set the image path when a user picks an image
+  const handleImageSelection = (imagePath: string) => {
+    setProfilePic(imagePath); // Store the selected image path
+  };
+
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: Colors.white }}
@@ -112,6 +122,29 @@ const RegisterScreen: FC = () => {
       <View style={styles.container}>
         <View style={styles.mainContainer}>
           <View style={styles.inputContainer}>
+            {/* Profile Picture Section */}
+            <View>
+              <View style={styles.profilePicContainer}>
+                {profilePic ? (
+                  <Image
+                    source={{ uri: profilePic }}
+                    style={styles.profilePic}
+                  />
+                ) : (
+                  <Image
+                    source={IMAGES.placeholder}
+                    style={styles.profilePic}
+                  />
+                )}
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                  <Image
+                    source={IMAGES.pencil} // Pencil icon to indicate editing
+                    style={styles.pencil}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <CustomInput
               label="Username"
               value={userName}
@@ -135,6 +168,7 @@ const RegisterScreen: FC = () => {
               error={!!emailError}
               errorMessage={emailError}
             />
+
             <CustomInput
               label="Mobile"
               value={mobile}
@@ -146,6 +180,7 @@ const RegisterScreen: FC = () => {
               error={!!mobileNumberError}
               errorMessage={mobileNumberError}
             />
+
             <CustomInput
               label="Password"
               value={password}
@@ -171,6 +206,7 @@ const RegisterScreen: FC = () => {
               error={!!confirmPasswordError}
               errorMessage={confirmPasswordError}
             />
+
             <View style={styles.genderButtonStyle}>
               <GenderSelectionButton
                 isSelected={selectedGender === 0}
@@ -203,6 +239,18 @@ const RegisterScreen: FC = () => {
           </View>
         </View>
       </View>
+
+      {/* Picker Modal */}
+      <PickerComp
+        visible={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        setImageCallback={handleImageSelection}
+        imageCamera={IMAGES.camera}
+        imageGallery={IMAGES.gallery}
+        imageCancel={IMAGES.close}
+        camera="Take Photo"
+        gallery="Choose from Gallery"
+      />
     </KeyboardAwareScrollView>
   );
 };

@@ -6,4 +6,5 @@ export enum SCREEN_NAMES {
   UploadScreen = 'UploadScreen',
   ProfileScreen = 'ProfileScreen',
   CommentScreen = 'CommentScreen',
+  EditProfile = 'EditProfile',
 }

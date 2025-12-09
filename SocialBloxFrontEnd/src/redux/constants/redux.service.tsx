@@ -16,7 +16,7 @@ export const SERVICE_ROUTES = {
   GET_PROFILE_BY_ID: '/api/users/getUser/:id',
   DELETE_POST_BY_ID: '/api/post/deletepost/:id',
   LIKE_POST_BY_ID: '/api/post/like/:id',
-  FOLLOW: '',
+  FOLLOW: '/api/users/follow/:id',
 } as const;
 
 // HTTP Methods

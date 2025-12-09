@@ -48,8 +48,6 @@ const styles = StyleSheet.create({
   dots: {
     width: moderateScale(20),
     height: moderateScale(20),
-    borderRadius: moderateScale(20),
-    left: moderateScale(5),
   },
 
   commentUser: {

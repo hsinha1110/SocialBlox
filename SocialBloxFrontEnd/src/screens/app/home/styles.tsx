@@ -97,8 +97,8 @@ export default StyleSheet.create({
   },
 
   icon: {
-    width: moderateScale(30),
-    height: moderateScale(30),
+    width: moderateScale(25),
+    height: moderateScale(25),
   },
 
   actionText: {

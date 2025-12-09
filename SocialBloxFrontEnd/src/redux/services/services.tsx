@@ -173,10 +173,7 @@ export const postUpdateServiceById = async (
       type: mimeType,
     } as any);
   }
-
-  // ✅ Correctly replace :id in URL
   const url = replaceUrl(SERVICE_ROUTES.UPDATE_POST_BY_ID, { id: postId });
-
   const { data } = await axios.put<AddPostResponse>(url, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -205,17 +202,15 @@ export const addCommentService = async (
   }
 };
 // Get Posts Service
-export const getCommentService = async (
-  postId: string,
-): Promise<GetCommentResponse> => {
+export const getCommentService = async (): Promise<GetCommentResponse> => {
   try {
     const config: AxiosRequestConfig = {
-      url: SERVICE_ROUTES.GET_COMMENTS, // Make sure this endpoint returns all comments
+      url: SERVICE_ROUTES.GET_COMMENTS,
       method: METHODS.GET,
     };
 
     const response = await axios.request<GetCommentResponse>(config);
-    return response.data; // Return the actual response data (comments)
+    return response.data;
   } catch (error: any) {
     console.error(
       'Error in getCommentService:',
@@ -226,6 +221,7 @@ export const getCommentService = async (
     );
   }
 };
+
 // Delete Comments By Id Service
 export const deleteCommentsByIdService = async (commentId: string) => {
   const url = replaceUrl(SERVICE_ROUTES.DELETE_COMMENTS_BY_ID, {
@@ -241,7 +237,6 @@ export const deleteCommentsByIdService = async (commentId: string) => {
 };
 
 // Update Comment By Id Service
-// Update Comment By Id Service
 export const updateCommentByIdService = async (
   commentId: string,
   data: { comment: string },
@@ -252,8 +247,8 @@ export const updateCommentByIdService = async (
 
   const response = await axios({
     url,
-    method: METHODS.PUT, // ✅ UPDATE ke liye PUT ya PATCH (jo backend use kar raha hai)
-    data, // { comment: 'new text' }
+    method: METHODS.PUT,
+    data,
   });
 
   return response.data;
@@ -284,4 +279,22 @@ export const getPostLikeByIdService = async ({
     );
     throw error;
   }
+};
+// Follow Service
+// Follow Service
+export const followService = async (userId: string, followUserId: string) => {
+  const url = replaceUrl(SERVICE_ROUTES.FOLLOW, {
+    id: userId,
+  });
+
+  const response = await axios({
+    url,
+    method: METHODS.PUT,
+    data: {
+      userId, // This is the current user
+      followUserId, // This is the user to be followed
+    },
+  });
+
+  return response.data;
 };

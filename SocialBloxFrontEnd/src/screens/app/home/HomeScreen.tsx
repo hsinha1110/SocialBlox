@@ -14,6 +14,8 @@ import {
   getPostThunk,
   deletePostByIdThunk,
   getPostLikeByIdThunk,
+  getCommentsThunk,
+  followUserThunk,
 } from '../../../redux/asyncThunk/auth.asyncThunk';
 import { IMAGES } from '../../../constants/Images';
 import styles from './styles';
@@ -21,6 +23,10 @@ import OptionModal from '../../../components/modal/optionsModal/OptionsModal';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { SCREEN_NAMES } from '../../../constants/ScreenNames';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppButton from '../../../components/globals/AppButton';
+import Colors from '../../../constants/Colors';
+import { FONTS } from '../../../constants/Fonts';
+import { moderateScale } from 'react-native-size-matters';
 
 const HomeScreen: FC = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -28,90 +34,107 @@ const HomeScreen: FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProp<any>>();
   const [id, setId] = useState<string | null>(null);
-  const [count, setCount] = useState<number>();
+  const [count, setCount] = useState<number>(0);
+
+  // map of postId -> comment count
+  const [commentsCountMap, setCommentsCountMap] = useState<
+    Record<string, number>
+  >({});
 
   const { posts, loading, error } = useSelector(
     (state: RootState) => state.post,
   );
 
+  // Load userId from AsyncStorage once
   useEffect(() => {
     const fetchId = async () => {
       try {
         const stored = await AsyncStorage.getItem('userId');
         if (stored) {
           setId(stored);
-          console.log('User ID from AsyncStorage:', stored);
         }
       } catch (e) {
-        console.log('Error reading userId from AsyncStorage', e);
+        console.error('Error reading userId from AsyncStorage', e);
       }
     };
     fetchId();
   }, []);
 
-  // unified current user id (use store first, then AsyncStorage)
-
-  // initial posts load
+  // Fetch posts and comments
   useEffect(() => {
-    dispatch(getPostThunk()).catch(err => console.log('get posts err', err));
+    const fetchPosts = async () => {
+      try {
+        await dispatch(getPostThunk()).unwrap();
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+      }
+    };
+    fetchPosts();
   }, [dispatch]);
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await fetch(
-          'http://192.168.1.40:8200/socialapp/api/post/comment/getcomments',
-        );
-
-        const result = await response.json(); // Convert response to JSON
-        setCount(result?.data?.length || 0);
-        console.log('Full Response:', result);
-
-        if (result?.data) {
-          result.data.forEach((item: any) => {
-            console.log(item._id);
-          });
-        }
-      } catch (error) {
-        console.log('Error fetching comments:', error);
+        const res = await dispatch(getCommentsThunk()).unwrap();
+        const comments = res?.data || [];
+        setCount(comments.length);
+        const commentMap: Record<string, number> = {};
+        comments.forEach((item: any) => {
+          commentMap[item.postId] = (commentMap[item.postId] || 0) + 1;
+        });
+        setCommentsCountMap(commentMap);
+      } catch (err) {
+        console.error('Error fetching comments via thunk:', err);
       }
     };
-
     fetchComments();
-  }, []);
+  }, [dispatch]);
+
   const onLikePress = async (item: any) => {
-    console.log('LIKE PRESSED ITEM 👉', item);
+    if (!id) {
+      console.log('No userId available. Please login.');
+      return;
+    }
 
     try {
-      if (!id) {
-        console.log('No userId available. Please login.');
-        return;
-      }
       const res = await dispatch(
         getPostLikeByIdThunk({
           id: item._id,
           body: { userId: id },
         } as any),
       ).unwrap();
-
       console.log('Like API response:', res);
-
-      // refresh posts to reflect updated likes
       await dispatch(getPostThunk()).unwrap();
     } catch (err) {
       console.log('Like error:', err);
     }
   };
 
-  // 1) Simple: render होने पे console में पोस्ट और उसकी comments दिखाओ
+  // const handleFollow = async (item: any) => {
+  //   console.log('......follow');
+  //   if (id && item.userId !== id) {
+  //     try {
+  //       const response = await dispatch(
+  //         followUserThunk({ userId: id, followUserId: item.userId }),
+  //       ).unwrap();
+  //       console.log('Followed user successfully', response);
+
+  //       // Refresh posts to update followers
+  //       await dispatch(getPostThunk()).unwrap();
+  //     } catch (error) {
+  //       console.log('Error following user:', error);
+  //     }
+  //   }
+  // };
+
   const renderItem = ({ item }: any) => {
-    // debug prints
-    console.log('RENDER POST ITEM 👉', item);
-    console.log('item._id:', item._id);
-    console.log('item.comments (from post object):', item?.comments);
+    const commentCount = commentsCountMap[item._id] ?? 0;
+    // Check if the current user is following the post owner
+    const isFollowing =
+      Array.isArray(item.followers) && item.followers.includes(id);
 
     return (
       <View style={styles.card}>
-        {/* header */}
         <View style={styles.headerRow}>
           <Image
             style={styles.profileImage}
@@ -122,17 +145,39 @@ const HomeScreen: FC = () => {
             }}
           />
           <Text style={styles.userName}>{item.username}</Text>
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedPost(item);
-              setOpenModal(true);
-            }}
-          >
-            <Image source={IMAGES.dots} style={{ width: 20, height: 20 }} />
-          </TouchableOpacity>
+          {item.userId === id && (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedPost(item);
+                setOpenModal(true);
+              }}
+            >
+              <Image source={IMAGES.dots} style={{ width: 20, height: 20 }} />
+            </TouchableOpacity>
+          )}
+          {/* {item.userId !== id && !isFollowing && (
+            <TouchableOpacity onPress={() => handleFollow(item)}>
+              <AppButton
+                title="Follow"
+                style={{ width: 120, bottom: moderateScale(20) }}
+                titleStyle={{ color: Colors.white, fontFamily: FONTS.Bold }}
+              />
+            </TouchableOpacity>
+          )} */}
+          {item.userId !== id && isFollowing && (
+            <TouchableOpacity onPress={() => {}}>
+              <AppButton
+                title="Following"
+                style={{
+                  width: 120,
+                  bottom: moderateScale(20),
+                  backgroundColor: Colors.gray,
+                }}
+                titleStyle={{ color: Colors.white, fontFamily: FONTS.Bold }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
-
-        {/* caption, image */}
         <Text style={styles.caption}>{item.caption}</Text>
         {item?.imageUrl ? (
           <Image
@@ -143,12 +188,15 @@ const HomeScreen: FC = () => {
         ) : (
           <Text style={styles.noImageText}>No image for this post</Text>
         )}
-
-        {/* actions */}
         <View style={styles.actionRow}>
           <View style={styles.actionItem}>
             <TouchableOpacity onPress={() => onLikePress(item)}>
-              <Image source={IMAGES.like} style={styles.icon} />
+              <Image
+                source={
+                  item.likes?.includes(id) ? IMAGES.like_fill : IMAGES.like
+                }
+                style={styles.icon}
+              />
             </TouchableOpacity>
             <Text style={styles.actionText}>
               {Array.isArray(item?.likes) ? item.likes.length : 0} Likes
@@ -156,27 +204,8 @@ const HomeScreen: FC = () => {
           </View>
 
           <View style={styles.actionItem}>
-            {/* WHEN pressing comment icon: navigate + ALSO print comments from API */}
             <TouchableOpacity
               onPress={async () => {
-                // 1) print whatever is present on item
-                console.log(
-                  'NAVIGATE -> item.comments (local):',
-                  item?.comments,
-                );
-
-                // 2) fetch from server to be sure (if your API supports filter by postId)
-                try {
-                  const resp = await fetch(
-                    `http://192.168.1.40:8200/socialapp/api/post/comment/getcomments?postId=${item._id}`,
-                  );
-                  const json = await resp.json();
-                  console.log('COMMENTS FROM API for postId', item._id, json);
-                } catch (e) {
-                  console.log('Error fetching comments from API', e);
-                }
-
-                // 3) then navigate to CommentScreen as before
                 navigation.navigate(SCREEN_NAMES.CommentScreen, {
                   postId: item._id,
                   userId: item.userId,
@@ -187,9 +216,7 @@ const HomeScreen: FC = () => {
               <Image source={IMAGES.comments} style={styles.icon} />
             </TouchableOpacity>
 
-            <Text style={styles.actionText}>
-              <Text style={styles.actionText}>{count} Comments</Text>
-            </Text>
+            <Text style={styles.actionText}>{commentCount} Comments</Text>
           </View>
         </View>
       </View>
@@ -203,7 +230,6 @@ const HomeScreen: FC = () => {
         .then(() => {
           console.log('Deleted post:', selectedPost._id);
           setOpenModal(false);
-          // refresh posts after delete
           dispatch(getPostThunk()).catch(e => console.log(e));
         })
         .catch(err => console.log('Delete error:', err));

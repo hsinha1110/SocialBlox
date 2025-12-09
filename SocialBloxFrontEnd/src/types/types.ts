@@ -72,6 +72,7 @@ export interface GetProfileParams {
 export interface UserProfile {
   username: string;
   emailId: string;
+  mobile: string;
 }
 
 export interface GetProfileResponse {
@@ -88,7 +89,6 @@ export interface GetProfileParams {
 export interface UserProfile {
   username: string;
   emailId: string;
-  mobile?: string;
   gender?: string;
 }
 
