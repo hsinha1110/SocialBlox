@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
+import Colors from '../../../constants/Colors';
 
 export default StyleSheet.create({
   loaderContainer: {
@@ -103,5 +104,12 @@ export default StyleSheet.create({
   actionText: {
     marginHorizontal: moderateScale(10),
     fontSize: moderateScale(14),
+  },
+  titleStyle: { color: Colors.black },
+  title: {
+    fontSize: moderateScale(24),
+    fontWeight: 'bold',
+    marginBottom: moderateScale(10),
+    color: Colors.black,
   },
 });

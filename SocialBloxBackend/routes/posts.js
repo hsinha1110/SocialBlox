@@ -1,30 +1,26 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
 const fs = require("fs/promises");
+const User = require("../modals/Users");
 
 const Post = require("../modals/Post");
 const upload = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 
 // Add Post
+// Add Post
 router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
   try {
     let imageUrl = "";
 
-    console.log("📸 req.file =>", req.file);
-    console.log("📝 req.body =>", req.body);
-
-    // ✅ Agar file aayi hai to Cloudinary par upload karo
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "socialblox/posts",
       });
 
-      console.log("☁️ Cloudinary upload result =>", result);
-
       imageUrl = result.secure_url;
 
-      // OPTIONAL: local temp file delete
+      // Delete local temp file
       try {
         await fs.unlink(req.file.path);
       } catch (e) {
@@ -32,9 +28,19 @@ router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
       }
     }
 
+    // Get user profilePic
+    const user = await User.findById(req.body.userId).select(
+      "profilePic username"
+    );
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
     const newPost = new Post({
       ...req.body,
       imageUrl,
+      profilePic: user.profilePic, // ✅ attach user's profilePic
+      username: user.username, // optional: attach username
     });
 
     await newPost.save();
@@ -154,7 +160,7 @@ router.get("/getpost", async (req, res) => {
   }
 });
 
-// 🔹 Get posts by userId (agar ye intention hai)
+//  Get posts by userId
 router.get("/user/:userId/posts", async (req, res) => {
   try {
     const posts = await Post.find({ userId: req.params.userId });
@@ -169,7 +175,7 @@ router.get("/user/:userId/posts", async (req, res) => {
   }
 });
 
-// 🔹 Like / Unlike
+//  Like / Unlike
 router.put("/like/:id", async (req, res) => {
   try {
     const { userId } = req.body;

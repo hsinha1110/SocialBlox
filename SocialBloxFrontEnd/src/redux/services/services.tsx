@@ -258,3 +258,30 @@ export const updateCommentByIdService = async (
 
   return response.data;
 };
+// getUserProfileById
+
+type LikePostParams = { id: string; body?: { userId: string } | any };
+
+export const getPostLikeByIdService = async ({
+  id,
+  body,
+}: LikePostParams): Promise<any> => {
+  try {
+    const config: AxiosRequestConfig = {
+      url: replaceUrl(SERVICE_ROUTES.LIKE_POST_BY_ID, { id }),
+      method: METHODS.PUT,
+      data: body ?? {},
+    };
+
+    const response: AxiosResponse<any> = await axios.request(config);
+
+    console.log('like post raw response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Like Post Service Error:',
+      error?.response?.data ?? error.message,
+    );
+    throw error;
+  }
+};

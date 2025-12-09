@@ -16,7 +16,6 @@ const ProfileScreen: React.FC = () => {
 
   const [id, setId] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
-  console.log(userName, '...userName');
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
@@ -52,6 +51,8 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <ScreenWrapper>
+      <Text style={styles.title}>Profile</Text>
+
       <View style={styles.container}>
         <Image
           style={styles.iconStyle}

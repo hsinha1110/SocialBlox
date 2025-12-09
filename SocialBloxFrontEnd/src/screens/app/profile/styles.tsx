@@ -61,5 +61,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   titleStyle: { color: Colors.black },
+  title: {
+    fontSize: moderateScale(24),
+    fontWeight: 'bold',
+    marginBottom: moderateScale(10),
+    color: Colors.black,
+  },
 });
 export default styles;

@@ -10,6 +10,8 @@ export const ASYNC_ROUTES = {
   UPDATE_POST_BY_ID: 'Update Post By Id',
   GET_PROFILE_BY_ID: 'Get Profile By Id',
   DELETE_POST_BY_ID: 'Delete Post By Id',
+  LIKE_POST_BY_ID: 'Like Post',
+  FOLLOW: 'Follow',
 };
 
 export const THUNK_STATUS = {

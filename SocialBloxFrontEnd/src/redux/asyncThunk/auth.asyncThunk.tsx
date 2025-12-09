@@ -7,6 +7,7 @@ import {
   deleteCommentsByIdService,
   deletePostByIdService,
   getCommentService,
+  getPostLikeByIdService,
   getPostService,
   getUserProfileByIdServices,
   LoginService,
@@ -30,6 +31,8 @@ import {
   AddCommentResponse,
   GetCommentResponse,
   UpdateCommentRequest,
+  LikePostResponse,
+  LikePostParams,
 } from '../../types/types';
 
 /* -------------------------------------------------------------------------- */
@@ -213,6 +216,27 @@ export const updateCommentByIdAsyncThunk = createAsyncThunk<
         error?.message ||
         'Something went wrong while editing comment';
       return rejectWithValue(msg);
+    }
+  },
+);
+// Like Post By Id Thunk
+export const getPostLikeByIdThunk = createAsyncThunk<
+  any, // returned payload
+  { id: string; body?: { userId: string } }, // arg includes body
+  { rejectValue: ErrorResponse }
+>(
+  ASYNC_ROUTES.LIKE_POST_BY_ID, // or ASYNC_ROUTES.LIKE_POST_BY_ID
+  async (args, { rejectWithValue }) => {
+    try {
+      const res = await getPostLikeByIdService(args);
+      console.log('like response (thunk):', res);
+      return res;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data ?? {
+          message: error?.message ?? 'Unable to like post',
+        },
+      );
     }
   },
 );

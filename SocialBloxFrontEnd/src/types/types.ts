@@ -153,3 +153,16 @@ export interface UpdateCommentRequest {
   commentId: string;
   comment: string;
 }
+
+export interface LikePostParams {
+  id: string; // post id (URL param)
+  body?: { userId: string } | Record<string, any>;
+}
+
+export interface LikePostResponse {
+  // backend returns either { status: true, message: "..." } or envelope etc.
+  status?: boolean;
+  message?: string;
+  data?: any;
+  [k: string]: any;
+}
