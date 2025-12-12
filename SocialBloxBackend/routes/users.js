@@ -103,81 +103,128 @@ router.get("/getUser/:id", async (req, res) => {
   }
 });
 
-//follow
+// Follow a user
 router.put("/follow/:id", async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.params.id });
-    const currentUser = await User.findOne({ _id: req.body.userId });
+    const targetUserId = req.params.id;
+    const currentUserId = req.body.userId;
 
-    let isFollowed = false;
-    user.followers.map((item) => {
-      if (item == req.body.userId) {
-        isFollowed = true;
-      }
-    });
+    if (currentUserId === targetUserId) {
+      return res.status(400).json({
+        status: false,
+        message: "You cannot follow yourself.",
+      });
+    }
 
-    if (isFollowed) {
-      const res1 = await User.updateOne(
-        { _id: req.params.id },
-        { $pull: { followers: req.body.userId } }
-      );
-      const res2 = await User.updateOne(
-        { _id: req.body.userId },
-        { $pull: { following: req.params.id } }
-      );
-      res
-        .status(200)
-        .json({ status: false, message: "user unfollowed successfully" });
+    // Fetch both users in parallel
+    const [targetUser, currentUser] = await Promise.all([
+      User.findById(targetUserId),
+      User.findById(currentUserId),
+    ]);
+
+    if (!targetUser || !currentUser) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
+      });
+    }
+
+    // Check if the current user is already following the target user
+    const isAlreadyFollowed = targetUser.followers.includes(currentUserId);
+
+    if (isAlreadyFollowed) {
+      // Unfollow
+      await Promise.all([
+        User.updateOne(
+          { _id: targetUserId },
+          { $pull: { followers: currentUserId } }
+        ),
+        User.updateOne(
+          { _id: currentUserId },
+          { $pull: { following: targetUserId } }
+        ),
+      ]);
+      return res.status(200).json({
+        status: false,
+        message: "You have unfollowed the user.",
+      });
     } else {
-      const res1 = await User.updateOne(
-        { _id: req.params.id },
-        { $push: { followers: req.body.userId } }
-      );
-      const res2 = await User.updateOne(
-        { _id: req.body.userId },
-        { $push: { following: req.params.id } }
-      );
-      res
-        .status(200)
-        .json({ status: true, message: "followed user successfully" });
+      // Follow
+      await Promise.all([
+        User.updateOne(
+          { _id: targetUserId },
+          { $push: { followers: currentUserId } }
+        ),
+        User.updateOne(
+          { _id: currentUserId },
+          { $push: { following: targetUserId } }
+        ),
+      ]);
+      return res.status(200).json({
+        status: true,
+        message: "You are now following the user.",
+      });
     }
   } catch (err) {
-    res.status(500).json(err);
+    console.error(err);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error.",
+    });
   }
 });
 
-//unfollow
+// Unfollow a user
 router.put("/unfollow/:id", async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.params.id });
-    const currentUser = await User.findOne({ _id: req.body.userId });
+    const targetUserId = req.params.id;
+    const currentUserId = req.body.userId;
 
-    let isFollowed = false;
-    user.followers.map((item) => {
-      if (item == req.body.userId) {
-        isFollowed = true;
-      }
-    });
+    // Fetch both users in parallel
+    const [targetUser, currentUser] = await Promise.all([
+      User.findById(targetUserId),
+      User.findById(currentUserId),
+    ]);
 
-    if (!isFollowed) {
-      res
-        .status(200)
-        .json({ status: false, message: "you are not  following this user" });
-    } else {
-      const res1 = await User.updateOne(
-        { _id: req.params.id },
-        { $pull: { followers: req.body.userId } }
-      );
-      const res2 = await User.updateOne(
-        { _id: req.body.userId },
-        { $pull: { following: req.params.id } }
-      );
-      res
-        .status(200)
-        .json({ status: true, message: "unfollowed user successfully" });
+    if (!targetUser || !currentUser) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
+      });
     }
+
+    // Check if the current user is already following the target user
+    const isAlreadyFollowing = targetUser.followers.includes(currentUserId);
+
+    if (!isAlreadyFollowing) {
+      return res.status(200).json({
+        status: false,
+        message: "You are not following this user.",
+      });
+    }
+
+    // Unfollow
+    await Promise.all([
+      User.updateOne(
+        { _id: targetUserId },
+        { $pull: { followers: currentUserId } }
+      ),
+      User.updateOne(
+        { _id: currentUserId },
+        { $pull: { following: targetUserId } }
+      ),
+    ]);
+
+    return res.status(200).json({
+      status: true,
+      message: "You have unfollowed the user.",
+    });
   } catch (err) {
-    res.status(500).json(err);
+    console.error(err);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error.",
+    });
   }
 });
 

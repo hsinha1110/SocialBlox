@@ -14,6 +14,7 @@ const secretKey = process.env.SECRET_KEY;
  * REGISTER user
  * Supports profilePic as file upload (multipart/form-data) or as URL in JSON
  */
+// REGISTER user
 router.post("/register", upload.single("profilePic"), async (req, res) => {
   try {
     const { username, emailId, password, mobile, gender, dob, address } =
@@ -25,11 +26,20 @@ router.post("/register", upload.single("profilePic"), async (req, res) => {
         .json({ status: false, message: "Required fields missing" });
     }
 
-    const existingUser = await User.findOne({ emailId });
-    if (existingUser) {
+    // Check if email is already registered
+    const existingEmail = await User.findOne({ emailId });
+    if (existingEmail) {
       return res
         .status(400)
         .json({ status: false, message: "Email already registered" });
+    }
+
+    // Check if mobile is already registered
+    const existingMobile = await User.findOne({ mobile });
+    if (existingMobile) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Mobile number already registered" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -42,7 +52,7 @@ router.post("/register", upload.single("profilePic"), async (req, res) => {
         folder: "socialblox/users",
       });
       profilePicUrl = result.secure_url;
-      await fs.unlink(req.file.path);
+      await fs.unlink(req.file.path); // Remove the file from local storage
     }
 
     const newUser = new User({
@@ -119,14 +129,14 @@ router.put("/update/:id", upload.single("profilePic"), async (req, res) => {
       req.body.password = await bcrypt.hash(password, salt);
     }
 
-    // Handle profilePic
+    // Handle profilePic upload or update
     let profilePicUrl = profilePic || "";
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "socialblox/users",
       });
       profilePicUrl = result.secure_url;
-      await fs.unlink(req.file.path);
+      await fs.unlink(req.file.path); // Remove the local file after upload
     }
 
     const updatedUser = await User.findByIdAndUpdate(
