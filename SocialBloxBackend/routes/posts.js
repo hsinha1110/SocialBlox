@@ -8,7 +8,6 @@ const upload = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 
 // Add Post
-// Add Post
 router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
   try {
     let imageUrl = "";
@@ -63,45 +62,41 @@ router.post("/addpost", upload.single("imageUrl"), async (req, res) => {
 // Update Post
 router.put("/updatepost/:id", upload.single("imageUrl"), async (req, res) => {
   try {
-    console.log("REQ BODY =>", req.body);
-    console.log("REQ FILE =>", req.file);
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ status: false, message: "Post not found" });
+    }
 
-    let imageUrl = req.body.imageUrl; // fallback to existing imageUrl if no new file
-
-    // If new file is uploaded, upload it to Cloudinary
+    // 1️⃣ Update image if new file is uploaded
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "socialblox/posts",
       });
+      post.imageUrl = result.secure_url;
 
-      imageUrl = result.secure_url;
-
-      // Delete local temp file
       try {
         await fs.unlink(req.file.path);
-      } catch (e) {
-        console.warn("Could not delete local file:", e.message);
+      } catch (err) {
+        console.warn("Could not delete temp file:", err.message);
       }
     }
 
-    // Update post with new data
-    const updatedPost = await Post.findOneAndUpdate(
-      { _id: req.params.id },
-      { $set: { ...req.body, imageUrl } },
-      { new: true }
-    );
+    // 2️⃣ Update other fields dynamically
+    const { imageUrl, ...otherFields } = req.body;
+    Object.assign(post, otherFields);
 
-    if (!updatedPost) {
-      return res.status(404).json({
-        status: false,
-        message: "Post not found",
-      });
+    // 3️⃣ Update profilePic from user
+    const user = await User.findById(post.userId).select("profilePic");
+    if (user) {
+      post.profilePic = user.profilePic;
     }
+
+    await post.save();
 
     res.status(200).json({
       status: true,
-      message: "Post data updated successfully",
-      data: updatedPost,
+      message: "Post updated successfully",
+      data: post,
     });
   } catch (error) {
     console.error("Update post error:", error);
